@@ -38,7 +38,7 @@ async function getPokemonDetails(pokemonName) {
 
     const abilities = data.abilities.map(item => item.ability.name)
     const base_experience = data.base_experience
-    console.log(abilities, base_experience)
+   // console.log(abilities, base_experience)
 
     return {
       // abilities: abilities,
@@ -58,17 +58,40 @@ async function getPokemonDetails(pokemonName) {
 }
 
 // Denna funktion ansvarar för att renderera ut pokemoninformation i varje pokemomkort
-function renderPokemonCards(pokemonList) {
+async function renderPokemonCards(pokemonList) {
 
   const cardsContainer = document.querySelector(".pokemon-cards-container");
+
+  // Samla komplett information om en pokemon (name, index, abilities, base_exp)
+  // const pokemon = {
+  //   name: pokemon.name,
+  //   abilities: abilities,
+  //   base_experience: base_experience,
+  //   index: index
+  // }
+
+  const completePokemonList = await Promise.all(pokemonList.map(async (pokemon, index) => {
+
+      const {abilities, base_experience} = await getPokemonDetails(pokemon.name);
+      return {
+        name: pokemon.name,
+        abilities: abilities,
+        base_experience: base_experience,
+        index: index
+      };
+  }));
+
+  console.log(completePokemonList)
+
+  // Filtrera, sortera...
   
-  cardsContainer.innerHTML = pokemonList.map((pokemon, index) => {
+  cardsContainer.innerHTML = completePokemonList.map((pokemon, index) => {
     return `
     <article class="pokemon-card">
       <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${index + 1}.png">
       <h2>${pokemon.name}</h2>
-      <p>Abilities: TODO</p>
-      <p>Base Experience: TODO</p>
+      <p>Abilities: ${pokemon.abilities.join(", ")}</p>
+      <p>Base Experience: ${pokemon.base_experience}</p>
    </article>
   `;
  }).join('');
