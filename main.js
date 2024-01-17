@@ -1,5 +1,8 @@
 
 import axios from "axios"
+let isSorted = false; // Flagga om listan är sorterad eller inte
+let isFiltered = false; // Flagga om listan är filtrerad eller inte
+let pokemonList; // Lista med alla pokemon
 
 // "results": [
 //   {
@@ -72,6 +75,7 @@ async function renderPokemonCards(pokemonList) {
 
   const completePokemonList = await Promise.all(pokemonList.map(async (pokemon, index) => {
 
+  
       const {abilities, base_experience} = await getPokemonDetails(pokemon.name);
       return {
         name: pokemon.name,
@@ -81,11 +85,22 @@ async function renderPokemonCards(pokemonList) {
       };
   }));
 
-  console.log(completePokemonList)
 
-  // Filtrera, sortera...
+  // Reduce
+  const totalBaseExperience = completePokemonList.reduce((total, pokemon) => total + pokemon.baseExperience, 0);
+  document.querySelector('.total_exp').textContent = `Total Base Experience: ${totalBaseExperience}`;
+
+  // Filter
+  const filterAbilities = ['solar-power'] ; 
+  let filteredList = isFiltered ? completePokemonList.filter(pokemon => {
+    return filterAbilities.every(ability => pokemon.abilities.includes(ability));
+  }) : completePokemonList;
   
-  cardsContainer.innerHTML = completePokemonList.map((pokemon, index) => {
+  // Sort
+  let listToRender = isSorted ? [...filteredList].sort((a, b) => (a.name < b.name) ? -1 : (a.name > b.name) ? 1 : 0) : filteredList;
+
+
+  cardsContainer.innerHTML = listToRender.map((pokemon, index) => {
     return `
     <article class="pokemon-card">
       <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${index + 1}.png">
@@ -96,18 +111,34 @@ async function renderPokemonCards(pokemonList) {
   `;
  }).join('');
 
-
-
 }
 
+// Eventlisteners
+const sortButton = document.querySelector(".btn_sort")
+sortButton.addEventListener('click', () => {
+  isSorted = !isSorted; 
+  if (pokemonList) { 
+    renderPokemonCards(pokemonList, isSorted, isFiltered);
+  } else {
+    console.error('pokemonList is not defined');
+  }
+});
 
+const filterButton = document.querySelector(".btn_filter")
+filterButton.addEventListener('click', () => {
+  isFiltered = !isFiltered; 
+  if (pokemonList) { 
+    renderPokemonCards(pokemonList, isSorted, isFiltered);
+  } else {
+    console.error('pokemonList is not defined');
+  }
+});
 
+// Här börjar det
 async function main() {
-  const pokemonList = await getPokemonList()
+   pokemonList = await getPokemonList()
   // Köra function som renderar ut pokemon-card datat
-  renderPokemonCards(pokemonList)
-  const data  = await  getPokemonDetails("charmander")
-  
+  renderPokemonCards(pokemonList)  
 }
 
 main();
